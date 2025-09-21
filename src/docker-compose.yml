@@ -19,13 +19,28 @@ services:
     container_name: kibana
     restart: always
     volumes:
-      - ./elk/kibana/config/ :opt/kibana/config
+      - ./ELK/kibana/config/:opt/kibana/config
     ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      XPACK_MONITORING_ENABLED: false
-      xpack.security.enabled: false
-      ES_JAVA_OPTS: "-Xmx256m -Xmx256m"
-      discovery.type: single-node
-      network.host: "0.0.0.0"
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    build: ELK/logstash/
+    container_name: logstash
+    restart: always
+    command: -f /etc/logstash/conf.d/
+    volumes:
+      - ./ELK/kibana/config/:opt/kibana/config
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - logstash
