@@ -1,23 +1,32 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="warn" strict="true" monitorInterval="30">
-    <properties>
-        <property name="filename">/log/springboot-elk-demo.log</property>
-        <property name="defaultpattern">
-            logdate=(%d{ISO8601})) thread=(%thread) level=(%level) loggerclass=(logger{36}) message=(%msg)%n
-        </property>
-    </properties>
-
-    <Filter type="ThresholdFilter" level="trace"> </Filter>
+    <Properties>
+        <!-- Use /app/logs which we’ll mount in docker-compose -->
+        <Property name="filename">/app/logs/springboot-elk-demo.log</Property>
+        <Property name="defaultpattern">
+            logdate=(%d{ISO8601}) thread=(%thread) level=(%level) loggerclass=(%logger{36}) message=(%msg)%n
+        </Property>
+    </Properties>
 
     <Appenders>
-        <Appender name="STDOUT" type="console">
-            <Layout type="PatternLayout" pattern="${defaultpattern}}"> </Layout>
-        </Appender>
-        <Appender name="File" type="File" fileName="${filename}}">
-            <Layout type="PatternLayout" pattern="${defaultpattern}}"> </Layout>
-        </Appender>
-        <Socket name="socket" host="logstash" port="9999" reconnectionDelayMillis="5000">
-            <Layout type="PatternLayout" pattern="${defaultpattern}}}"> </Layout>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="${defaultpattern}"/>
+        </Console>
+
+        <File name="File" fileName="${filename}">
+            <PatternLayout pattern="${defaultpattern}"/>
+        </File>
+
+        <Socket name="socket" host="${env:LOGSTASH_HOST}" port="${env:LOGSTASH_PORT}" reconnectionDelayMillis="5000" ignoreExceptions="true">
+            <PatternLayout pattern="${defaultpattern}"/>
         </Socket>
     </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="STDOUT"/>
+            <AppenderRef ref="File"/>
+            <AppenderRef ref="socket"/>
+        </Root>
+    </Loggers>
 </Configuration>

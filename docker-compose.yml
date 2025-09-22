@@ -1,5 +1,7 @@
-version: '1.0'
+version: '3.8'
 services:
+
+  # -------- Elasticsearch --------
   elasticsearch:
     build: ELK/elasticsearch/
     container_name: elasticsearch
@@ -10,37 +12,48 @@ services:
     environment:
       XPACK_MONITORING_ENABLED: false
       xpack.security.enabled: false
-      ES_JAVA_OPTS: "-Xmx256m -Xmx256m"
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
       discovery.type: single-node
       network.host: "0.0.0.0"
 
+  # -------- Kibana --------
   kibana:
     build: ELK/kibana/
     container_name: kibana
     restart: always
     volumes:
-      - ./ELK/kibana/config/:opt/kibana/config
+      - ./ELK/kibana/config/:/opt/kibana/config
     ports:
       - "5601:5601"
     depends_on:
       - elasticsearch
 
+  # -------- Logstash --------
   logstash:
     build: ELK/logstash/
     container_name: logstash
     restart: always
     command: -f /etc/logstash/conf.d/
     volumes:
-      - ./ELK/kibana/config/:opt/kibana/config
-    ports:
-      - "5601:5601"
+      - ./ELK/logstash/pipeline:/etc/logstash/conf.d
+#    ports:
+#      - "5001:5000"
     depends_on:
       - elasticsearch
 
+  # -------- Spring Boot App --------
   app:
     build: .
+    container_name: springboot-app
     restart: always
     ports:
       - "8080:8080"
+    environment:
+      - LOGSTASH_HOST=logstash
+      - LOGSTASH_PORT=5000
     depends_on:
       - logstash
+
+networks:
+  default:
+    driver: bridge
