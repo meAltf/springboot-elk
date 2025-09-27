@@ -33,7 +33,7 @@ services:
     build: ELK/logstash/
     container_name: logstash
     restart: always
-    command: -f /etc/logstash/conf.d/
+#    command: -f /etc/logstash/conf.d/
     volumes:
       - ./ELK/logstash/pipeline:/etc/logstash/conf.d
 #    ports:
